@@ -1,0 +1,29 @@
+name: Run Midnight Sync Pipeline
+
+on:
+  workflow_dispatch:        # Manual trigger via GitHub UI
+  schedule:
+    - cron: '*/30 * * * *'  # Every 30 minutes (optional)
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repo
+        uses: actions/checkout@v3
+
+      - name: 🔧 Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: 📦 Install dependencies
+        run: npm install
+
+      - name: 🔐 Setup service account file
+        run: |
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > ./service-account.json
+
+      - name: 🚀 Run sync pipeline
+        run: node runPipeline.js
