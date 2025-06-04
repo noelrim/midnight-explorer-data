@@ -9,20 +9,27 @@ initializeApp({
 const db = getFirestore();
 
 async function syncSpometrics() {
-  console.log("🔍 Fetching RecentBlocks...");
-  const blockSnap = await db.collection('RecentBlocks').get();
-  const blockData = blockSnap.docs.map(doc => doc.data());
+  const MAX_BLOCKS = 150;
 
-  // Group new blocks per author
+  console.log(`🔍 Fetching last ${MAX_BLOCKS} blocks from RecentBlocks...`);
+
+  const blockSnap = await db
+    .collection('RecentBlocks')
+    .orderBy('BlockHeight', 'desc')
+    .limit(MAX_BLOCKS)
+    .get();
+
+  const blockData = blockSnap.docs.map(doc => doc.data()).reverse();
+
   const authorBlocks = {};
   for (const block of blockData) {
     const author = block.Author;
     const height = block.BlockHeight;
+    if (!author) continue;
     if (!authorBlocks[author]) authorBlocks[author] = [];
     authorBlocks[author].push(height);
   }
 
-  // Fetch existing spometrics
   const spometricsSnap = await db.collection('spometrics').get();
   const existingStats = {};
   spometricsSnap.forEach(doc => {
@@ -33,18 +40,16 @@ async function syncSpometrics() {
     };
   });
 
-  // Prepare updates
   const updates = [];
   for (const [author, heights] of Object.entries(authorBlocks)) {
     const current = existingStats[author] || { blockcount: 0, lastblockadded: 0 };
     const newBlocks = heights.filter(h => h > current.lastblockadded);
     if (newBlocks.length === 0) continue;
 
-    const maxNew = Math.max(...newBlocks);
     updates.push({
       author,
       blockcount: current.blockcount + newBlocks.length,
-      lastblockadded: maxNew,
+      lastblockadded: Math.max(...newBlocks),
     });
   }
 
