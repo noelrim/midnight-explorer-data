@@ -4,7 +4,8 @@ import { exec } from 'child_process';
 
 export default function handler(req, res) {
   const secret = process.env.PIPELINE_SECRET;
-
+console.log('Provided:', req.query.secret);
+console.log('Expected:', process.env.PIPELINE_SECRET);
   // Optional: protect access with a secret
   if (secret && req.query.secret !== secret) {
     return res.status(401).json({ error: 'Unauthorized' });
