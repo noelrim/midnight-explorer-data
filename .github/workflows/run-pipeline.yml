@@ -21,9 +21,11 @@ jobs:
       - name: 📦 Install dependencies
         run: npm install
 
-      - name: 🔐 Setup service account file
+      - name: 🔐 Write Firebase service account JSON safely
         run: |
-          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > ./service-account.json
+          cat > service-account.json <<EOF
+          ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          EOF
 
       - name: 🚀 Run sync pipeline
         run: node runPipeline.js
