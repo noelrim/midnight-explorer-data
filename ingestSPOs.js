@@ -3,7 +3,8 @@ import * as cryptoUtils from './public/cryptoutils.js';
 import { initializeApp, applicationDefault, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
-import serviceAccount from './service-account.json' with { type: "json" };
+//import serviceAccount from './service-account.json' with { type: "json" };
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
 
 initializeApp({

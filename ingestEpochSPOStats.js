@@ -6,7 +6,8 @@ import { getFirestore } from 'firebase-admin/firestore';
 initializeApp({ projectId: 'midnight-explorer' });
 const db = getFirestore();*/
 
-import serviceAccount from './service-account.json' with { type: "json" };
+//import serviceAccount from './service-account.json' with { type: "json" };
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
 
 initializeApp({

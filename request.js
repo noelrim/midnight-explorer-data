@@ -3,9 +3,11 @@ import fetch from 'node-fetch';
 const REQUEST = {
   API_ENDPOINT: "https://rpc.testnet-02.midnight.network/",
   INDEXER_ENDPOINT: "https://indexer-rs.testnet-02.midnight.network/api/v1/graphql/",
-  CSCAN_API_KEY: "REDACTED_CSCAN_API_KEY",  // CardanoScan API key
+  CSCAN_API_KEY: process.env.CSCAN_API_KEY,
   BLOCKFROST_API: "https://cardano-preview.blockfrost.io/api/v0/",
-  BLOCKFROST_KEY: "REDACTED_BLOCKFROST_KEY",
+  BLOCKFROST_KEY: process.env.BLOCKFROST_KEY,
+
+  import serviceAccount from './service-account.json' with { type: "json" };
   async getEpoch() {
     const payload = {
       jsonrpc: "2.0",
