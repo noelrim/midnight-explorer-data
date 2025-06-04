@@ -1,4 +1,4 @@
-import { handler as runPipeline } from '../../lib/pipeline/index.js';
+import { handler as runPipeline } from '../lib/pipeline/index.js';
 
 export default async function handler(req, res) {
   const secret = process.env.PIPELINE_SECRET;
