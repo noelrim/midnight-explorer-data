@@ -15,7 +15,6 @@ function runScript(scriptName) {
       resolve(stdout);
     });
 
-    // Show logs live during GitHub Actions run
     child.stdout?.pipe(process.stdout);
     child.stderr?.pipe(process.stderr);
   });
@@ -41,3 +40,8 @@ async function runPipeline() {
 
 // Global unhandled promise rejection handler
 process.on('unhandledRejection', (err) => {
+  console.error('🔥 Unhandled rejection:', err);
+  process.exit(1);
+});
+
+runPipeline(); // <--- THIS LINE MUST BE PRESENT
