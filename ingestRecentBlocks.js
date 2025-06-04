@@ -47,18 +47,17 @@ async function getHighestBlockHeight() {
 
   let startHeight = 1;
   if (!snapshot.empty) {
-    startHeight = snapshot.docs[0].data().BlockHeight+1;
+    startHeight = snapshot.docs[0].data().BlockHeight + 1;
   }
 
   console.log('Starting ingestion from block height:', startHeight);
   return startHeight;
 }
 
-// --- INGESTION SETUP ---
 const startExecutionTime = Date.now();
 const startHeight = paramStartHeight ?? await getHighestBlockHeight();
 const endHeight = paramEndHeight ?? Infinity;
-const BUFFER_LIMIT = 600;
+const BUFFER_LIMIT = 500;
 const offsetClause = `(offset: { height: ${startHeight} })`;
 const query = `
   subscription {
@@ -86,61 +85,9 @@ const client = createClient({
 let finished = false;
 const txBuffer = [];
 const authorCounts = {};
-const hourlyStats = {};
-let expectedHeight = startHeight;
 const blockBuffer = new Map();
+let expectedHeight = startHeight;
 let inserting = false;
-
-async function processBlock(block) {
-  const blockTime = new Date(block.timestamp);
-  const txs = block.transactions || [];
-
-  if (blockTime.getTime() >= startExecutionTime || block.height > endHeight) {
-    finished = true;
-    setTimeout(() => client.dispose?.(), 0);
-    return false;
-  }
-
-  await retryAsync(() => db.collection('RecentBlocks').doc(block.hash).set({
-    BlockHeight: block.height,
-    Author: block.author,
-    Timestamp: blockTime,
-    Hash: block.hash,
-    NumTransactions: txs.length,
-    Transactions: txs.map(tx => tx.hash),
-  }));
-
-  authorCounts[block.author] = (authorCounts[block.author] || 0) + 1;
-
-  for (const tx of txs) {
-    let deploy = 0, update = 0, call = 0;
-
-    for (const action of tx.contractActions || []) {
-      switch (action.__typename) {
-        case 'ContractDeploy': deploy += 1; break;
-        case 'ContractUpdate': update += 1; break;
-        case 'ContractCall': call += 1; break;
-      }
-    }
-
-    txBuffer.push({
-      id: tx.hash,
-      data: {
-        BlockHeight: block.height,
-        OutputAddress: null,
-        TotalOutput: null,
-        Timestamp: blockTime,
-        NumDeploy: deploy,
-        NumUpdate: update,
-        NumCall: call
-      }
-    });
-  }
-
-  console.log(`✅ Block ${block.height} stored (${txs.length} txs)`);
-
-  return true;
-}
 
 async function insertBufferedBlocks() {
   if (inserting) return;
@@ -148,25 +95,70 @@ async function insertBufferedBlocks() {
 
   const heights = Array.from(blockBuffer.keys()).sort((a, b) => a - b);
   const toInsert = heights.slice(0, BUFFER_LIMIT);
+  const blockBatch = db.batch();
 
   for (const height of toInsert) {
     const block = blockBuffer.get(height);
     blockBuffer.delete(height);
 
-    try {
-      const cont = await processBlock(block);
-      if (!cont) {
-        inserting = false;
-        finished = true;
-        return;
-      }
-      expectedHeight++;
-    } catch (err) {
-      console.error(`❌ Failed to process block ${block.height}:`, err);
-      inserting = false;
+    const blockTime = new Date(block.timestamp);
+    const txs = block.transactions || [];
+
+    if (blockTime.getTime() >= startExecutionTime || block.height > endHeight) {
       finished = true;
-      throw err;
+      setTimeout(() => client.dispose?.(), 0);
+      inserting = false;
+      return;
     }
+
+    blockBatch.set(db.collection('RecentBlocks').doc(block.hash), {
+      BlockHeight: block.height,
+      Author: block.author,
+      Timestamp: blockTime,
+      Hash: block.hash,
+      NumTransactions: txs.length,
+      Transactions: txs.map(tx => tx.hash),
+    });
+
+    authorCounts[block.author] = (authorCounts[block.author] || 0) + 1;
+
+    for (const tx of txs) {
+      let deploy = 0, update = 0, call = 0;
+
+      for (const action of tx.contractActions || []) {
+        switch (action.__typename) {
+          case 'ContractDeploy': deploy += 1; break;
+          case 'ContractUpdate': update += 1; break;
+          case 'ContractCall': call += 1; break;
+        }
+      }
+
+      txBuffer.push({
+        id: tx.hash,
+        data: {
+          BlockHeight: block.height,
+          OutputAddress: null,
+          TotalOutput: null,
+          Timestamp: blockTime,
+          NumDeploy: deploy,
+          NumUpdate: update,
+          NumCall: call
+        }
+      });
+    }
+
+    console.log(`🧱 Buffered block ${block.height}`);
+    expectedHeight++;
+  }
+
+  try {
+    await retryAsync(() => blockBatch.commit());
+    console.log(`✅ Committed ${toInsert.length} blocks.`);
+  } catch (err) {
+    console.error('❌ Error committing block batch:', err);
+    finished = true;
+    inserting = false;
+    throw err;
   }
 
   inserting = false;
@@ -187,22 +179,7 @@ try {
         }
 
         while (blockBuffer.has(expectedHeight) && !inserting) {
-          const block = blockBuffer.get(expectedHeight);
-          blockBuffer.delete(expectedHeight);
-          try {
-            const cont = await processBlock(block);
-            if (!cont) {
-              finished = true;
-              resolve();
-              return;
-            }
-            expectedHeight++;
-          } catch (err) {
-            console.error(`❌ Failed to process block ${block.height}:`, err);
-            finished = true;
-            reject(err);
-            return;
-          }
+          await insertBufferedBlocks();
         }
       },
       error: (err) => {
