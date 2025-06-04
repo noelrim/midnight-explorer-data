@@ -1,14 +1,18 @@
 {
   "name": "midnight-explorer-data",
   "version": "1.0.0",
-  "main": "ingestEpochSPOStats.js",
+  "description": "Block ingestion and analytics for Midnight explorer",
+  "type": "module",
+  "main": "runPipeline.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node runPipeline.js",
+    "ingest": "node ingestRecentBlocks.js",
+    "hourly": "node syncHourlyTransactions.js",
+    "spo": "node syncSpometrics.js",
+    "test": "echo \"No tests defined\" && exit 0"
   },
-  "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "firebase-admin": "^13.4.0",
     "graphql-ws": "^5.16.2",
