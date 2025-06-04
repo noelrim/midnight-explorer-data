@@ -1,5 +1,4 @@
-// /api/runPipeline.js
-import { handler as runPipeline } from '../lib/pipeline/index.js';
+import { handler as runPipeline } from '../../lib/pipeline/index.js';
 
 export default async function handler(req, res) {
   const secret = process.env.PIPELINE_SECRET;
@@ -8,9 +7,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    await runPipeline(); // execute directly
-    res.status(200).json({ message: 'Pipeline executed.' });
+    await runPipeline();
+    res.status(200).json({ message: '✅ Pipeline executed successfully' });
   } catch (err) {
-    res.status(500).json({ error: 'Failed', details: err.message });
+    res.status(500).json({ error: 'Pipeline failed', details: err.message });
   }
 }
