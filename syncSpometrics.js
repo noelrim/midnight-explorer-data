@@ -9,7 +9,7 @@ initializeApp({
 const db = getFirestore();
 
 async function syncSpometrics() {
-  const MAX_BLOCKS = 150;
+  const MAX_BLOCKS = 1500;
 
   console.log(`🔍 Fetching last ${MAX_BLOCKS} blocks from RecentBlocks...`);
 
