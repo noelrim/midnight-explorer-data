@@ -3,9 +3,19 @@ import { exec } from 'child_process';
 function runScript(scriptName) {
   return new Promise((resolve, reject) => {
     const child = exec(`node ${scriptName}`, (error, stdout, stderr) => {
-      if (error) return reject(new Error(`❌ ${scriptName} failed:\n${stderr}`));
+      if (error) {
+        console.error(`❌ ${scriptName} failed with exit code ${error.code}`);
+        console.error('--- STDERR ---');
+        console.error(stderr);
+        console.error('--- STDOUT ---');
+        console.error(stdout);
+        return reject(error);
+      }
+      console.log(`✅ ${scriptName} completed successfully.`);
       resolve(stdout);
     });
+
+    // Show logs live during GitHub Actions run
     child.stdout?.pipe(process.stdout);
     child.stderr?.pipe(process.stderr);
   });
@@ -24,9 +34,10 @@ async function runPipeline() {
 
     console.log('✅ Pipeline completed successfully.');
   } catch (err) {
-    console.error(err.message);
-    process.exit(1);
+    console.error('❌ Pipeline failed.');
+    process.exit(err.code || 1);
   }
 }
 
-runPipeline();
+// Global unhandled promise rejection handler
+process.on('unhandledRejection', (err) => {
