@@ -3,7 +3,7 @@ name: Run Midnight Sync Pipeline
 on:
   workflow_dispatch:        # Manual trigger via GitHub UI
   schedule:
-    - cron: '*/30 * * * *'  # Every 30 minutes (optional)
+    - cron: '*/5 * * * *'  # Every 30 minutes (optional)
 
 jobs:
   sync:
