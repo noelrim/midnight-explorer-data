@@ -2,7 +2,7 @@ import deserializeTransaction from '../lib/pipeline/deserializeTransaction.js';
 
 export default async function handler(req, res) {
   // CORS headers for all requests
-  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3001');
+  res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_TX_DES_ORIGIN || "https://localhost:3001");
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
