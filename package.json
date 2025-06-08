@@ -5,7 +5,6 @@
   "type": "module",
   "main": "runPipeline.js",
   "scripts": {
-    "start": "node runPipeline.js",
     "ingest": "node ingestRecentBlocks.js",
     "hourly": "node syncHourlyTransactions.js",
     "spo": "node syncSpometrics.js",
@@ -15,8 +14,15 @@
   "license": "ISC",
   "dependencies": {
     "@midnight-ntwrk/ledger": "^4.0.0",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
     "firebase-admin": "^13.4.0",
     "graphql-ws": "^5.16.2",
     "ws": "^8.18.2"
+  },
+  "devDependencies": {
+    "vercel": "^42.3.0"
   }
 }
