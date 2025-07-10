@@ -1,0 +1,10 @@
+{
+  "emulators": {
+    "firestore": {
+      "port": 8080
+    }
+  },
+  "projects": {
+    "default": "midnight-explorer" // 👈 must match
+  }
+}
