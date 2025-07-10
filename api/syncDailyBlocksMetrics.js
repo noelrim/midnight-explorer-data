@@ -1,5 +1,5 @@
 // File: api/ingestRecentBlocks.js
-import ingestRecentBlocks from '../lib/pipeline/syncDailyBlocksMetrics.js';
+import syncDailyBlocksMetrics from '../lib/pipeline/syncDailyBlocksMetrics.js';
 
 export default async function handler(req, res) {
   if (req.query.secret !== process.env.PIPELINE_SECRET) {
